@@ -3,7 +3,7 @@ from rest_auth.registration.serializers import RegisterSerializer
 
 from django.core.files.base import ContentFile
 
-from ..models import Users
+from ..models import *
 
 class CustomRegisterSerializer(RegisterSerializer):
     def save(self, request):
@@ -19,7 +19,7 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.save()
         
         return user
-    
+
 class UserSerializer(serializers.ModelSerializer):      
     class Meta:
         model = Users
@@ -31,3 +31,33 @@ class UserSerializer(serializers.ModelSerializer):
                 'write_only' : True
             }
         }
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = '__all__'
+
+class AidSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Aid
+        fields = '__all__'
+
+class EmployerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employer
+        fields = '__all__'
+
+class EmployerCompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employer_company
+        fields = '__all__'
+
+class StorageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Storage
+        fields = '__all__'
+        
+class CompanyAidsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = company_aids
+        fields = '__all__'
