@@ -15,5 +15,4 @@ router.register(r'employer_company', EmployerCompanyViewSet, basename='employer_
 router.register(r'storage', StorageViewSet, basename='storage')
 router.register(r'company_aids',CompanyAidsViewSet, basename='company_aids')
 
-
 urlpatterns = router.urls 
