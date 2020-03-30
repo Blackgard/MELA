@@ -40,7 +40,12 @@ class CompanySerializer(serializers.ModelSerializer):
 class AidSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aid
-        fields = '__all__'
+        fields = [
+            'title', 'short_title', 'authors', 
+            'date_public', 'description', 'language',
+            'serial_number', 'cost', 'body', 'type_id',
+            'status_id', 'employer_id'
+        ]
 
 class EmployerSerializer(serializers.ModelSerializer):
     class Meta:

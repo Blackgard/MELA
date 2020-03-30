@@ -140,13 +140,13 @@ class Aid(models.Model):
     title = models.TextField()
     short_title = models.CharField(max_length=200)
     authors = models.CharField(max_length=2000)
-    date_public = models.DateField()
-    description = models.TextField()
+    date_public = models.DateField(null=True)
+    description = models.TextField(null=True)
     language = models.CharField(max_length=2)
     serial_number = models.PositiveIntegerField()
-    eula = models.FileField(upload_to='license')
+    eula = models.FileField(upload_to='license', null=True)
     cost = models.CharField(max_length=400)
-    body = models.TextField()
+    body = models.TextField(null=True)
     
     type_id = models.ForeignKey(
         'type_aid',
@@ -189,7 +189,7 @@ class Employer_company(models.Model):
         verbose_name_plural = "Работник компании"
     
     def __str__(self):
-        return f'{self.id_user.login} {self.id_company.name}'
+        return f'{self.id_user.username} {self.id_company.name}'
 
 class Employer(models.Model):
     id_user    = models.ForeignKey(
@@ -203,7 +203,7 @@ class Employer(models.Model):
         verbose_name_plural = "Работник"
     
     def __str__(self):
-        return f'{self.id_user.login}'
+        return f'{self.id_user.username}'
 
 
 # Составные таблицы
@@ -251,7 +251,7 @@ class type_company(models.Model):
 
 class type_storage(models.Model):
     name = models.CharField(max_length=200, verbose_name='Имя типа')
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', null=True)
     
     class Meta:
         verbose_name = "Типы хранилищ"
@@ -272,7 +272,7 @@ class status_aid(models.Model):
     
 class type_aid(models.Model):
     name = models.CharField(max_length=200, verbose_name='Название типа ЭОП')
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', null=True)
     
     class Meta:
         verbose_name = "Типы ЭОП"
@@ -284,7 +284,7 @@ class type_aid(models.Model):
 class type_operation(models.Model):
     name        = models.CharField(max_length=200, verbose_name='Название операции')
     short_name  = models.CharField(max_length=50, verbose_name='Короткое название операции')
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', null=True)
     key         = models.PositiveSmallIntegerField(verbose_name='Ключ операции')
     
     class Meta:

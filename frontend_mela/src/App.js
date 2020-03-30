@@ -5,16 +5,26 @@ import { createBrowserHistory } from 'history';
 import SwitchRouter from './routers';
 import Layout from './components/layout';
 
+import { connect } from 'react-redux';
+
 const history = createBrowserHistory();
 
-function App() {
+function App(props) {
   return (
     <Router history={history}>
-      <Layout history={history}>
-        <SwitchRouter/>
+      <Layout {...props} history={history}>
+        <SwitchRouter isAuth={props.isAuth}/>
       </Layout>
     </Router>
   );
 }
 
-export default App;
+const mapStateToProps = state => {
+  return {
+    isAuth  : (
+      state.auth.token !== null               ||
+      localStorage.getItem('token') !== null)
+  }
+}
+
+export default connect(mapStateToProps)(App);
