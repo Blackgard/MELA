@@ -12,15 +12,26 @@ const TableAidsView = (props) => {
 
 const mapStateToProps = (state) => {
     return {
-        loading     : state.aid.loading,
-        error       : state.aid.error,
-        data        : state.aid.data
+        loadingTypes  : state.aid.loadingTypes,
+        loadingAids   : state.aid.loadingAids,
+        loadingDelete : state.aid.loadingDelete,
+
+        data          : state.aid.data,
+        types         : state.aid.types,
+
+        viewForm      : state.aid.viewForm,
+        error         : state.aid.error,
+        user_info   : JSON.parse(localStorage.getItem('user_info')),
     };
 }
 
 const mapDispatchToProps = (dispatch) => {
     return {
-        onLoadAids : async() => {await dispatch(action.aidLoad())}
+        onLoadAids   : async()       => {await dispatch(action.aidLoad())},
+        setViewForm  : async(isView) => {await dispatch(action.setViewForm(isView))},
+        onAddAid     : async(data)   => {await dispatch(action.aidAdd(data))},
+        getTypeAid   : async()       => {await dispatch(action.getTypeAid())},
+        onDeleteAid  : async(listAids)   => {await dispatch(action.aidDelete(listAids))}
     }
 }
 

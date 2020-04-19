@@ -36,27 +36,52 @@ export const checkAuthTimeout = expirationTime => {
     return dispatch => {
         setTimeout(() => {
             dispatch(logout());
-        }, expirationTime * 1000)
+        }, expirationTime * 336)
     }
 }
 
 export const authLogin = (username, password) => {
     return dispatch => {
         dispatch(authStart());
-        axios.post(`${apiURL}/api/login/`, {
+        axios.post(`${apiURL}/login/`, {
             username: username,
             password: password
         })
         .then(res => {
-            let data = {
-                'username': res.data.user.username,
-                'email'   : res.data.user.email,
-                'token'   : res.data.token
+            let id_company = false;
+            if (!res.data.user.is_staff) {
+                axios.get(`${apiURL}/company/?employer_id=${res.data.user.id}`)
+                .then(company => {
+                    id_company = company.data[0].id;
+                    let data = {
+                        'id_company' : id_company,
+                        'username'   : res.data.user.username,
+                        'email'      : res.data.user.email,
+                        'token'      : res.data.token,
+                        'is_staff'   : res.data.user.is_staff
+                    }
+
+                    localStorage.setItem('token', res.data.token);
+                    localStorage.setItem('user_info', JSON.stringify(data));
+                    dispatch(authSuccess(data.token));
+                    dispatch(checkAuthTimeout(3600)); 
+                })
+                .catch(err => {
+                    dispatch(authFail(err.response.data.non_field_errors));
+                })
+            } else {
+                let data = {
+                    'username': res.data.user.username,
+                    'email'   : res.data.user.email,
+                    'token'   : res.data.token,
+                    'is_staff' : res.data.user.is_staff
+                }
+
+                localStorage.setItem('token', res.data.token);
+                localStorage.setItem('user_info', JSON.stringify(data));
+                dispatch(authSuccess(data.token));
+                dispatch(checkAuthTimeout(3600)); 
             }
-            localStorage.setItem('token', res.data.token);
-            localStorage.setItem('user_info', JSON.stringify(data));
-            dispatch(authSuccess(data.token));
-            dispatch(checkAuthTimeout(3600)); 
         })
         .catch(err => {
             dispatch(authFail(err.response.data.non_field_errors));
@@ -64,14 +89,14 @@ export const authLogin = (username, password) => {
     }
 }
 
-export const Signup = (username, email, password1, password2) => {
+export const Signup = (data) => {
     return dispatch => {
         dispatch(authStart())
-        axios.post(`${apiURL}/api/signup/`, {
-            username    : username,
-            email       : email,
-            password1   : password1,
-            password2   : password2
+        axios.post(`${apiURL}/signup/`, {
+            username    : data.username,
+            email       : data.email,
+            password1   : data.password1,
+            password2   : data.password2
         })
         .then(res => {
             let data = {
@@ -85,7 +110,7 @@ export const Signup = (username, email, password1, password2) => {
             dispatch(checkAuthTimeout(3600))
         })
         .catch(err => {
-            dispatch(authFail(String(err)));
+            dispatch(authFail(err.response.data));
         })
     }
 }

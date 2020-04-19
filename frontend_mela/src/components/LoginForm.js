@@ -12,9 +12,12 @@ const LoginForm = (props) => {
     };
 
     useEffect(() =>  {
-        console.log(props.error);
         if (props.isAuth) {
-            props.history.push('/home');
+            if (props.user_info.is_staff) {
+                props.history.push('/applications');
+            } else {
+                props.history.push('/profile');
+            }
         }
     })
 

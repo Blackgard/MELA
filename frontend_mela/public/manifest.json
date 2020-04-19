@@ -8,9 +8,14 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "logo64.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "64x64"
+    },
+    {
+      "src": "logo128.png",
+      "type": "image/png",
+      "sizes": "128x128"
     },
     {
       "src": "logo512.png",
@@ -19,7 +24,7 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
+  "display": "minimal-ui",
   "theme_color": "#000000",
   "background_color": "#ffffff"
 }

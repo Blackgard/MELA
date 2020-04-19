@@ -14,7 +14,8 @@ const mapStateToProps = (state) => {
     return {
         loading     : state.auth.loading,
         error       : state.auth.error,
-        isAuth      : localStorage.getItem('token') !== null
+        isAuth      : localStorage.getItem('token') !== null,
+        user_info   : JSON.parse(localStorage.getItem('user_info')),
     };
 }
 

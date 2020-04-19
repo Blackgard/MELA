@@ -1,13 +1,21 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils.translation import gettext_lazy as _
 
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+def get_sentinel_user():
+    return get_user_model().objects.get_or_create(username='deleted')[0]
 
 # Основные таблицы
 class Storage(models.Model):
     name = models.CharField(max_length=500)
     
-    Identifying_number = models.UUIDField(
-        verbose_name='Идентификационный номер'
+    identifying_number = models.UUIDField(
+        verbose_name='Идентификационный номер',
+        default=uuid.uuid4, editable=False, null=True, blank=True
     )
     
     ip = models.GenericIPAddressField(verbose_name='ipv4')
@@ -16,6 +24,16 @@ class Storage(models.Model):
         'type_storage', 
         on_delete=models.SET_NULL,
         null=True,
+    )
+    class Answer(models.IntegerChoices):
+        NO = 0, _('Выключен')
+        YES = 1, _('Включен')
+        
+        
+    status = models.IntegerField(
+        verbose_name='Состояние включенности', 
+        choices=Answer.choices,
+        default=0
     )
     
     class Meta:
@@ -26,13 +44,6 @@ class Storage(models.Model):
         return self.name
 
 class Users(AbstractUser):
-    type_account = models.IntegerField(
-        verbose_name="Тип аккаунта", 
-        blank=True, 
-        default=1,
-        null=True
-    )
-    
     location = models.CharField(
         verbose_name="Родной город", 
         max_length=500, 
@@ -76,11 +87,19 @@ class Company(models.Model):
         verbose_name='Город организации'
     )
     email        = models.EmailField(verbose_name='Почта организации')
+    
     type_company = models.ForeignKey(
         'type_company',
         on_delete=models.SET_NULL,
         null=True
     )
+    
+    id_employer = models.ForeignKey(
+        'users',
+        on_delete=models.CASCADE,
+        null=True
+    )
+    
     aids = models.ManyToManyField(
         'aid',
         through='company_aids',
@@ -132,21 +151,68 @@ class Operation(models.Model):
 
 class Aid(models.Model):
     TYPE_STATUS = (
-        ('ok','Успешно'),
-        ('err', 'Ошибка'),
-        ('wait', 'Обработка'),
+        ('ok'   , 'Работает'),
+        ('err'  , 'Ошибка'),
+        ('comp' , 'Доработка'),
+        ('wait' , 'Обработка'),
+        ('start', 'Создано')
+    )
+    
+    TYPE_DEVICES = (
+        ('Phone'         , 'Телефон'),
+        ('Pc'            , 'ПК'),
+        ('Tablet'        , 'Планшет'),
+        ('PhoneTablet'   , 'Телефон и планшет'),
+        ('PhonePc'       , 'Телефон и ПК'),
+        ('PhoneTabletPc' , 'Все гаджеты')
+    )
+    
+    TYPE_ACCESS = (
+        ('free', 'Бесплатное'),
+        ('buy' , 'Платное'),
+        ('demo', 'Демо'),
+    )
+    
+    MEDIA = (
+        ('Photo', 'Фото'),
+        ('Video', 'Видео'),
+        ('Flash', 'Флеш'),
+        ('Other', 'Другое'),
+        ('All',   'Смешанное'),
+        
+        ('PhotoVideo', 'Фото и видео'),
+        ('PhotoFlash', 'Фото и флеш'),
+        ('PhotoOther', 'Фото и другое'),
+        
+        ('VideoFlash', 'Видео и флеш'),
+        ('VideoOther', 'Видео и другое'),
+        
+        ('FlashOther', 'Флеш и другое'),
+        
+        ('PhotoVideoOther', 'Фото, видео и другое'),
+        ('PhotoFlashOther', 'Фото, флеш и другое'),
+        ('PhotoVideoFlashOther', 'Фото, видео, флеш и другое'),
     )
     
     title = models.TextField()
     short_title = models.CharField(max_length=200)
     authors = models.CharField(max_length=2000)
     date_public = models.DateField(null=True)
-    description = models.TextField(null=True)
-    language = models.CharField(max_length=2)
-    serial_number = models.PositiveIntegerField()
-    eula = models.FileField(upload_to='license', null=True)
+    description = models.TextField(null=True, blank=True)
+    language = models.CharField(max_length=5)
+    serial_number = models.UUIDField(default=uuid.uuid4, editable=False, null=True, blank=True)
+    eula = models.FileField(upload_to='license/', null=True, blank=True)
     cost = models.CharField(max_length=400)
-    body = models.TextField(null=True)
+    body = models.TextField(null=True, blank=True)
+    
+    key_words   = models.CharField(max_length=2000, default=None, null=True)
+    
+    type_device = models.CharField(max_length=200, default='PhoneTabletPc', choices=TYPE_DEVICES)
+    type_access = models.CharField(max_length=200, default='free', choices=TYPE_ACCESS)
+    media       = models.CharField(max_length=200, default='All', choices=MEDIA)
+    
+    publisher      = models.CharField(max_length=2000, default=None, null=True, blank=True)
+    additional_req = models.TextField(null=True, default=None, blank=True)
     
     type_id = models.ForeignKey(
         'type_aid',
@@ -154,12 +220,19 @@ class Aid(models.Model):
         null=True
     )
     
-    status_id = models.CharField(max_length=50, choices=TYPE_STATUS)
+    status_id = models.CharField(max_length=50, default='start', choices=TYPE_STATUS)
     
     employer_id = models.ForeignKey(
         'Employer',
         on_delete=models.SET_NULL,
         null=True
+    )
+    
+    storage_id = models.ForeignKey(
+        'storage',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
     )
     
     class Meta:
@@ -172,29 +245,10 @@ class Aid(models.Model):
 
 # Подтаблицы Users
 
-class Employer_company(models.Model):
-    id_company = models.ForeignKey(
-        'Company',
-        on_delete=models.SET_NULL,
-        null=True
-    )
-    id_user    = models.ForeignKey(
-        'Users',
-        on_delete=models.SET_NULL,
-        null=True
-    )
-    
-    class Meta:
-        verbose_name = "Работники компаний"
-        verbose_name_plural = "Работник компании"
-    
-    def __str__(self):
-        return f'{self.id_user.username} {self.id_company.name}'
-
 class Employer(models.Model):
     id_user    = models.ForeignKey(
         'Users',
-        on_delete=models.SET_NULL,
+        on_delete=models.SET(get_sentinel_user),
         null=True
     )
     
@@ -203,7 +257,8 @@ class Employer(models.Model):
         verbose_name_plural = "Работник"
     
     def __str__(self):
-        return f'{self.id_user.username}'
+        if self.id_user: return f'{self.id_user.username}'
+        else: return 'deleted'
 
 
 # Составные таблицы
@@ -211,23 +266,26 @@ class Employer(models.Model):
 class company_aids(models.Model):
     aids_id = models.ForeignKey(
         'Aid', 
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True
     )
     
     company_id = models.ForeignKey(
         'Company', 
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True
     )
     
     date_appeal = models.DateField(auto_now=True)
-    emp_company_id = models.ForeignKey(
-        'Employer_company',
-        on_delete=models.SET_NULL,
-        null=True
-    )
     
+    def get_info_company(self):
+        return {
+            'id'   : self.company_id.id,
+            'name' : self.company_id.name,
+            'location' : self.company_id.location,
+            'email'    : self.company_id.email,
+            'type_company' : self.company_id.type_company.name
+        }
     class Meta:
         verbose_name = "Список ЭОП компаний"
         verbose_name_plural = "ЭОП компании"

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
 from manageMELA.settings import ADMIN_NAME
 from .serializers import *
 from ..models import *
@@ -11,14 +12,29 @@ class UserViewSet(viewsets.ModelViewSet):
     
 class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer 
-         
+    permission_classes = [AllowAny]
+    
     def get_queryset(self):
+        creator_sql = self.request.user.username
+        employer_id = self.request.GET.get('employer_id', '') 
+        if employer_id:
+            return Company.objects.filter(id_employer=employer_id)
+
         return Company.objects.all() 
 
 class AidViewSet(viewsets.ModelViewSet):
     serializer_class = AidSerializer 
          
     def get_queryset(self):
+        creator_sql = self.request.user.username
+        employer_id = self.request.GET.get('employer_id', '') 
+        storage_id  = self.request.GET.get('storage_id', '') 
+        
+        if employer_id:
+            return Aid.objects.filter(employer_id=employer_id)
+        if storage_id:
+            return Aid.objects.filter(storage_id=storage_id)
+        
         return Aid.objects.all() 
 
 class EmployerViewSet(viewsets.ModelViewSet):
@@ -26,13 +42,7 @@ class EmployerViewSet(viewsets.ModelViewSet):
          
     def get_queryset(self):
         return Employer.objects.all() 
-    
-class EmployerCompanyViewSet(viewsets.ModelViewSet):
-    serializer_class = EmployerCompanySerializer 
-         
-    def get_queryset(self):
-        return Employer_company.objects.all() 
-    
+
 class StorageViewSet(viewsets.ModelViewSet):
     serializer_class = StorageSerializer 
          
@@ -45,3 +55,26 @@ class CompanyAidsViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return company_aids.objects.all() 
     
+class StatusAidViewSet(viewsets.ModelViewSet):
+    serializer_class = StatusAidSerializer
+    
+    def get_queryset(self):
+        return status_aid.objects.all() 
+
+class TypeAidViewSet(viewsets.ModelViewSet):
+    serializer_class = TypeAidsSerializer
+    
+    def get_queryset(self):
+        return type_aid.objects.all() 
+
+class TypeStorageViewSet(viewsets.ModelViewSet):
+    serializer_class = TypeStoragesSerializer
+    
+    def get_queryset(self):
+        return type_storage.objects.all() 
+    
+class TypeCompanyViewSet(viewsets.ModelViewSet):
+    serializer_class = TypeCompanySerializer
+    permission_classes = [AllowAny]
+    def get_queryset(self):
+        return type_company.objects.all() 
